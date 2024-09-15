@@ -1,5 +1,5 @@
-// @flow strict
-
+'use client'
+import React, { useRef, useEffect } from 'react';
 import { personalData } from "@/utils/data/personal-data";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,19 +8,80 @@ import { FaFacebook, FaTwitterSquare } from "react-icons/fa";
 import { MdDownload } from "react-icons/md";
 import { RiContactsFill } from "react-icons/ri";
 import { SiLeetcode } from "react-icons/si";
+import * as THREE from 'three';
 
 function HeroSection() {
+  const canvasRef = useRef();
+
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Create multiple floating objects
+    const objects = [];
+    const geometries = [
+      new THREE.TorusGeometry(5, 2, 16, 100),
+      new THREE.OctahedronGeometry(4),
+      new THREE.TetrahedronGeometry(4),
+    ];
+
+    for (let i = 0; i < 10; i++) {
+      const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+      const material = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(`hsl(${Math.random() * 360}, 50%, 50%)`),
+        wireframe: true,
+      });
+      const object = new THREE.Mesh(geometry, material);
+      object.position.set(
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 100
+      );
+      objects.push(object);
+      scene.add(object);
+    }
+
+    camera.position.z = 30;
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      objects.forEach((obj) => {
+        obj.rotation.x += 0.01;
+        obj.rotation.y += 0.01;
+      });
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+    };
+  }, []);
+
   return (
     <section className="relative flex flex-col items-center justify-between py-4 lg:py-12">
+      <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full -z-10" />
       <Image
         src="/hero.svg"
         alt="Hero"
         width={1572}
         height={795}
-        className="absolute -top-[98px] -z-10"
+        className="absolute -top-[98px] -z-5"
       />
 
-      <div className="grid grid-cols-1 items-start lg:grid-cols-2 lg:gap-12 gap-y-8">
+      <div className="grid grid-cols-1 items-start lg:grid-cols-2 lg:gap-12 gap-y-8 z-10">
         <div className="order-2 lg:order-1 flex flex-col items-start justify-center p-2 pb-20 md:pb-10 lg:pt-10">
           <h1 className="text-3xl font-bold leading-10 text-white md:font-extrabold lg:text-[2.6rem] lg:leading-[3.5rem]">
             Hello, <br />
